@@ -13,6 +13,9 @@ spring:
     enabled: true
 
 configvault:
+  auth:
+    username: ${CONFIGVAULT_ADMIN_USERNAME:admin}
+    password: ${CONFIGVAULT_ADMIN_PASSWORD:admin}
   encryption:
     key: ${CONFIGVAULT_ENCRYPTION_KEY}
     key-id: ${CONFIGVAULT_ENCRYPTION_KEY_ID:local-v1}

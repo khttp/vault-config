@@ -63,6 +63,11 @@ function Modal({ title, onClose, children }) {
 }
 
 export default function App() {
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState("");
+  const [loginForm, setLoginForm] = useState({ username: "", password: "" });
+  const [authError, setAuthError] = useState("");
   const [projects, setProjects] = useState([]);
   const [projectId, setProjectId] = useState("");
   const [environments, setEnvironments] = useState([]);
@@ -71,7 +76,7 @@ export default function App() {
   const [assignments, setAssignments] = useState([]);
   const [serviceId, setServiceId] = useState("");
   const [entries, setEntries] = useState([]);
-  const [loadingProjects, setLoadingProjects] = useState(true);
+  const [loadingProjects, setLoadingProjects] = useState(false);
   const [loadingWorkspace, setLoadingWorkspace] = useState(false);
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [error, setError] = useState("");
@@ -95,6 +100,31 @@ export default function App() {
     entry.key.toLowerCase().includes(query.trim().toLowerCase()),
   );
 
+  useEffect(() => {
+    let active = true;
+    api.session()
+      .then((user) => {
+        if (!active) return;
+        setCurrentUser(user.username);
+        setAuthenticated(true);
+      })
+      .catch(() => {
+        if (active) setAuthenticated(false);
+      })
+      .finally(() => active && setAuthLoading(false));
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    const requireLogin = () => {
+      setAuthenticated(false);
+      setCurrentUser("");
+      setAuthError("Your session expired. Please sign in again.");
+    };
+    window.addEventListener("configvault:unauthorized", requireLogin);
+    return () => window.removeEventListener("configvault:unauthorized", requireLogin);
+  }, []);
+
   const loadProjects = useCallback(async (preferredId = "") => {
     setLoadingProjects(true);
     try {
@@ -113,8 +143,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    loadProjects();
-  }, [loadProjects]);
+    if (authenticated) loadProjects();
+  }, [authenticated, loadProjects]);
 
   useEffect(() => {
     let active = true;
@@ -203,6 +233,34 @@ export default function App() {
       after();
     } catch (caught) {
       setError(caught.message);
+    }
+  };
+
+  const signIn = async (event) => {
+    event.preventDefault();
+    setAuthError("");
+    try {
+      const user = await api.login(loginForm);
+      setCurrentUser(user.username);
+      setLoginForm((current) => ({ ...current, password: "" }));
+      setAuthenticated(true);
+    } catch (caught) {
+      setAuthError(caught.message);
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      await api.logout();
+    } catch (caught) {
+      setAuthError(caught.message);
+    } finally {
+      setAuthenticated(false);
+      setCurrentUser("");
+      setProjects([]);
+      setEntries([]);
+      setError("");
+      setNotice("");
     }
   };
 
@@ -315,6 +373,27 @@ export default function App() {
     }, `Version ${version.version} restored as a new version.`);
   };
 
+  if (authLoading) {
+    return <main className="login-page"><div className="login-card"><span className="brand-mark"><Icon name="layers" size={21} /></span><p>Checking your session…</p></div></main>;
+  }
+
+  if (!authenticated) {
+    return (
+      <main className="login-page">
+        <form className="login-card" onSubmit={signIn}>
+          <span className="brand-mark"><Icon name="layers" size={21} /></span>
+          <div className="eyebrow"><span className="eyebrow-line" /> CONFIGURATION WORKSPACE</div>
+          <h1>Welcome back<span className="title-period">.</span></h1>
+          <p>Sign in to manage your ConfigVault workspace.</p>
+          {authError && <div className="login-error" role="alert">{authError}</div>}
+          <label>Username<input autoFocus autoComplete="username" value={loginForm.username} onChange={(event) => setLoginForm({ ...loginForm, username: event.target.value })} required /></label>
+          <label>Password<input type="password" autoComplete="current-password" value={loginForm.password} onChange={(event) => setLoginForm({ ...loginForm, password: event.target.value })} required /></label>
+          <button className="button button-primary" type="submit">Sign in</button>
+        </form>
+      </main>
+    );
+  }
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -334,7 +413,7 @@ export default function App() {
       <main className="main-area">
         <header className="topbar">
           <div className="breadcrumb"><span>Workspace</span><Icon name="chevron" size={14} /><strong>{project?.name || "Overview"}</strong></div>
-          <div className="topbar-right"><span className="local-badge"><span className="status-dot" /> LOCAL</span><span className="avatar">CV</span></div>
+          <div className="topbar-right"><span className="local-badge"><span className="status-dot" /> LOCAL</span><span className="avatar" title={currentUser}>{currentUser.slice(0, 2).toUpperCase()}</span><button className="text-button" onClick={signOut}>Sign out</button></div>
         </header>
 
         <div className="content">

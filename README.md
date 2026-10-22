@@ -36,6 +36,11 @@ Open the dashboard at `http://localhost:3000`. Swagger UI is available at
 `http://localhost:3000/swagger-ui/index.html`, and the proxied backend health
 check is at `http://localhost:3000/actuator/health`.
 
+Sign in with `admin` / `admin` for local development. Set
+`CONFIGVAULT_ADMIN_USERNAME` and `CONFIGVAULT_ADMIN_PASSWORD` in `.env` to
+choose different credentials. Change the default password before exposing
+ConfigVault beyond your local machine.
+
 PostgreSQL and the backend are only reachable inside the Compose network; only
 the frontend port is published to the host. Postgres data is stored in the
 `postgres-data` named volume.
@@ -43,6 +48,5 @@ the frontend port is published to the host. Postgres data is stored in the
 Stop the stack with `Ctrl+C`, or run `docker compose down`. To also permanently
 delete the local database data, run `docker compose down -v`.
 
-> The management API currently has no authentication. This setup is for local
-> development only; do not expose it to a network or use it to manage real
-> secrets.
+> This is a local development application. The default login is intentionally
+> simple; change it before exposing the service to a network.

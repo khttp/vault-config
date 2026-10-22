@@ -28,6 +28,7 @@ import org.springdoc.webmvc.core.configuration.MultipleOpenApiSupportConfigurati
 import org.springdoc.webmvc.core.configuration.SpringDocWebMvcConfiguration;
 
 @WebMvcTest(ProjectController.class)
+@org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc(addFilters = false)
 @ImportAutoConfiguration({
         SpringDocConfigProperties.class,
         SpringDocConfiguration.class,

@@ -35,7 +35,12 @@ with this key cannot be decrypted if it is lost. Keep the same key across
 restarts; the `.env` file is ignored by Git.
 
 Flyway applies database migrations at startup. Hibernate validates the schema
-but does not create or modify it (`ddl-auto: validate`). Health endpoint:
+but does not create or modify it (`ddl-auto: validate`). The local login
+defaults to `admin` / `admin`; set `CONFIGVAULT_ADMIN_USERNAME` and
+`CONFIGVAULT_ADMIN_PASSWORD` to override these credentials. Change the default
+password before exposing the application beyond a trusted local machine.
+
+Health endpoint:
 `http://localhost:8080/actuator/health`. OpenAPI UI:
 `http://localhost:8080/swagger-ui/index.html`; JSON:
 `http://localhost:8080/v3/api-docs`.
@@ -73,10 +78,9 @@ new version. Audit records track writes and rollbacks without storing values.
 
 ## Security status
 
-The current management API has no authentication or authorization. Secret
-values are masked and encrypted at rest, but this does not make the unauthenticated
-API safe to expose. Run it locally only; do not use it for real secrets or expose
-it to a network until authentication and authorization are implemented. Service
+The management API requires a login session, and state-changing requests require
+a CSRF token. The `admin` / `admin` default is only suitable for local
+development; configure a strong password before any network exposure. Service
 token creation/validation, service-facing config retrieval, and audited secret
 reveal are not implemented yet.
 

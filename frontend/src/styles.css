@@ -26,6 +26,18 @@ button { cursor: pointer; }
 button:disabled, select:disabled { cursor: not-allowed; opacity: .48; }
 a { color: inherit; text-decoration: none; }
 
+.login-page { align-items: center; background: radial-gradient(ellipse at 50% 35%, #1a271d 0, var(--bg) 55%); display: flex; justify-content: center; min-height: 100vh; padding: 24px; }
+.login-card { background: #151c18; border: 1px solid #2b382e; border-radius: 10px; box-shadow: 0 22px 80px #0005; display: flex; flex-direction: column; gap: 15px; max-width: 390px; padding: 32px; width: 100%; }
+.login-card .brand-mark { margin-bottom: 5px; }
+.login-card .eyebrow { margin-top: 5px; }
+.login-card h1 { color: #f0f3ef; font: 700 28px "Manrope", sans-serif; letter-spacing: -1px; margin: 0; }
+.login-card > p { color: #8b978e; font-size: 12px; margin: -7px 0 3px; }
+.login-card label { color: #aab5ac; display: flex; flex-direction: column; font-size: 11px; gap: 7px; }
+.login-card input { background: #101612; border: 1px solid #344137; border-radius: 5px; color: #e7eee7; outline: none; padding: 11px 12px; }
+.login-card input:focus { border-color: #8fbd64; box-shadow: 0 0 0 2px #b8f27718; }
+.login-card .button { justify-content: center; margin-top: 5px; min-height: 40px; }
+.login-error { background: #35221f; border: 1px solid #59332d; border-radius: 5px; color: #f0a394; font-size: 11px; padding: 10px 12px; }
+
 .app-shell { min-height: 100vh; }
 .sidebar { background: #121814; border-right: 1px solid #222d25; bottom: 0; display: flex; flex-direction: column; left: 0; padding: 28px 17px 18px; position: fixed; top: 0; width: 244px; z-index: 5; }
 .brand { align-items: center; display: flex; gap: 11px; margin: 0 0 53px 3px; }

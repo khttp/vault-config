@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springdoc.core.configuration.SpringDocConfiguration;
 import org.springdoc.core.properties.SpringDocConfigProperties;
@@ -21,6 +23,7 @@ import org.springdoc.webmvc.core.configuration.MultipleOpenApiSupportConfigurati
 import org.springdoc.webmvc.core.configuration.SpringDocWebMvcConfiguration;
 
 @WebMvcTest
+@org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc(addFilters = false)
 @ImportAutoConfiguration({
         SpringDocConfigProperties.class,
         SpringDocConfiguration.class,
@@ -46,6 +49,12 @@ class ApiDocumentationTest {
 
     @MockitoBean
     private ConfigEntryManager configs;
+
+    @MockitoBean
+    private AuthenticationManager authenticationManager;
+
+    @MockitoBean
+    private SecurityContextRepository securityContextRepository;
 
     @Test
     void publishesOpenApiDocumentWithProjectServiceAndEnvironmentEndpoints() throws Exception {
