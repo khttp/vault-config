@@ -116,7 +116,10 @@ h1 { color: #f0f3ef; font: 700 31px "Manrope", sans-serif; letter-spacing: -1.1p
 .config-table th:first-child, .config-table td:first-child { padding-left: 17px; }
 .config-table td { border-bottom: 1px solid #263029; color: #bec8bf; font-size: 11px; height: 49px; padding: 8px 13px; }
 .config-table tbody tr:hover:not(:has(.table-empty)) { background: #19211c; }
+.config-key-cell { align-items: center; display: inline-flex; gap: 5px; }
 .config-key { background: #202a23; border: 1px solid #2d3a30; border-radius: 3px; color: #c1e8a0; font: 10px var(--mono); padding: 4px 6px; white-space: nowrap; }
+.copy-url-button { align-items: center; background: transparent; border: 0; border-radius: 3px; color: #78877c; cursor: pointer; display: inline-flex; justify-content: center; padding: 4px; }
+.copy-url-button:hover { background: #28342b; color: var(--green); }
 .config-value { align-items: center; color: #aeb9b0; display: inline-flex; font: 10px var(--mono); gap: 6px; max-width: 230px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .config-value.is-secret { color: #9ba79e; letter-spacing: 1px; }
 .config-value.is-secret svg { color: #a1d576; flex: 0 0 auto; }

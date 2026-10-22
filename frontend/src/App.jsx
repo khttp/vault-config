@@ -9,6 +9,7 @@ function Icon({ name, size = 18 }) {
     layers: <><path d="m12 3 9 5-9 5-9-5 9-5Z" /><path d="m3 12 9 5 9-5" /><path d="m3 16 9 5 9-5" /></>,
     cube: <><path d="m12 3 9 5v8l-9 5-9-5V8l9-5Z" /><path d="m3.5 8.5 8.5 5 8.5-5M12 13.5V21" /></>,
     key: <><circle cx="8" cy="15" r="5" /><path d="m11.5 11.5 8-8L22 6l-2 2 2 2-3 3-2-2-4 4" /></>,
+    copy: <><rect x="8" y="8" width="13" height="13" rx="2" /><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" /></>,
     plus: <><path d="M12 5v14M5 12h14" /></>,
     chevron: <path d="m9 18 6-6-6-6" />,
     down: <path d="m7 10 5 5 5-5" />,
@@ -248,6 +249,14 @@ export default function App() {
     }, `${target?.name || "Service"} assigned to ${environment?.name || "environment"}.`);
   };
 
+  const copyConfigUrl = async (entry) => {
+    const path = `/api/projects/${projectId}/environments/${environmentId}/services/${serviceId}/config/${encodeURIComponent(entry.key)}`;
+    await runAction(
+      () => navigator.clipboard.writeText(`${window.location.origin}${path}`),
+      `URL for ${entry.key} copied.`,
+    );
+  };
+
   const removeService = async (assignedServiceId) => {
     const target = services.find((item) => item.id === assignedServiceId);
     if (!window.confirm(`Remove ${target?.name || "this service"} from ${environment?.name || "this environment"}? Its config entries will be deleted.`)) return;
@@ -417,7 +426,7 @@ export default function App() {
                     )}
                     {!loadingConfig && visibleEntries.map((entry) => (
                       <tr key={entry.id}>
-                        <td><code className="config-key">{entry.key}</code></td>
+                        <td><span className="config-key-cell"><code className="config-key">{entry.key}</code><button className="copy-url-button" onClick={() => copyConfigUrl(entry)} title={`Copy URL for ${entry.key}`} aria-label={`Copy URL for ${entry.key}`}><Icon name="copy" size={14} /></button></span></td>
                         <td>
                           {editingKey === entry.key ? (
                             <form className="inline-edit" onSubmit={updateConfig}>
