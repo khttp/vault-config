@@ -19,4 +19,9 @@ public interface EnvironmentServiceAssignmentRepository
                     UUID projectId,
                     UUID environmentId,
                     UUID serviceId);
+
+    boolean existsByProjectIdAndEnvironmentIdAndServiceId(
+            UUID projectId,
+            UUID environmentId,
+            UUID serviceId);
 }

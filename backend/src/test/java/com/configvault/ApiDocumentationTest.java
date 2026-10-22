@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.configvault.environment.EnvironmentService;
 import com.configvault.environment.EnvironmentServiceAssignmentManager;
+import com.configvault.config.ConfigEntryManager;
 import com.configvault.project.ProjectService;
 import com.configvault.service.ApplicationServiceManager;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,9 @@ class ApiDocumentationTest {
     @MockitoBean
     private EnvironmentServiceAssignmentManager assignments;
 
+    @MockitoBean
+    private ConfigEntryManager configs;
+
     @Test
     void publishesOpenApiDocumentWithProjectServiceAndEnvironmentEndpoints() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
@@ -50,6 +54,9 @@ class ApiDocumentationTest {
                 .andExpect(jsonPath("$.info.title").value("ConfigVault API"))
                 .andExpect(jsonPath("$.paths['/api/projects']").exists())
                 .andExpect(jsonPath("$.paths['/api/projects/{projectId}/services']").exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/projects/{projectId}/environments/{environmentId}/services/{serviceId}/config']")
+                        .exists())
                 .andExpect(jsonPath(
                         "$.paths['/api/projects/{projectId}/environments/{environmentId}/services']")
                         .exists());

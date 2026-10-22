@@ -10,6 +10,8 @@ public interface ApplicationServiceRepository extends JpaRepository<ApplicationS
 
     List<ApplicationService> findAllByProjectIdOrderByNameAsc(UUID projectId);
 
+    Optional<ApplicationService> findByProjectIdAndName(UUID projectId, String name);
+
     Optional<ApplicationService> findByIdAndProjectId(UUID id, UUID projectId);
 
     boolean existsByIdAndProjectId(UUID id, UUID projectId);

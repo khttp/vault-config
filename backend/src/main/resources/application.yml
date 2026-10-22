@@ -12,6 +12,11 @@ spring:
   flyway:
     enabled: true
 
+configvault:
+  encryption:
+    key: ${CONFIGVAULT_ENCRYPTION_KEY}
+    key-id: ${CONFIGVAULT_ENCRYPTION_KEY_ID:local-v1}
+
 management:
   endpoints:
     web:

@@ -24,9 +24,14 @@ public class ApplicationServiceManager {
     @Transactional
     public ApplicationServiceResponse create(UUID projectId, ApplicationServiceRequest request) {
         requireProject(projectId);
+        String name = request.name().trim();
+        var existing = services.findByProjectIdAndName(projectId, name);
+        if (existing.isPresent()) {
+            return ApplicationServiceResponse.from(existing.get());
+        }
         ApplicationService service = services.saveAndFlush(new ApplicationService(
                 projectId,
-                request.name().trim(),
+                name,
                 request.description()));
         return ApplicationServiceResponse.from(service);
     }

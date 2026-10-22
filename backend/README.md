@@ -1,88 +1,87 @@
 # ConfigVault Backend
 
-Java 21 and Spring Boot backend for the ConfigVault project. The service is a
-separate Maven project so it can evolve independently from other repository
-components.
+Java 21 and Spring Boot backend for ConfigVault, organized as a feature-oriented
+modular monolith.
 
 ## Requirements
 
 - JDK 21 or newer
 - Maven 3.9 or newer
-- PostgreSQL 16
+- PostgreSQL 16 or newer
+- OpenSSL for generating the local encryption key
 
 ## Run locally
 
-Create a PostgreSQL database named `configvault`, then start the service:
+The recommended full-stack setup uses Docker Compose from the repository root;
+see the root `README.md`. To run only the backend locally, create a PostgreSQL
+database and user, then from this directory run:
 
 ```sh
 export DATABASE_URL=jdbc:postgresql://localhost:5432/configvault
 export DATABASE_USERNAME=configvault
 export DATABASE_PASSWORD='your-local-database-password'
+if [ ! -f .env ]; then
+  umask 077
+  printf 'CONFIGVAULT_ENCRYPTION_KEY=%s\n' "$(openssl rand -base64 32)" > .env
+fi
+set -a
+. ./.env
+set +a
 mvn spring-boot:run
 ```
 
-Flyway applies the schema on startup. The application validates the schema
-against Hibernate entities (`ddl-auto: validate`); it does not create or update
-tables through Hibernate. The health endpoint is available at
-`http://localhost:8080/actuator/health`.
-Interactive API documentation is available at
-`http://localhost:8080/swagger-ui/index.html`, with the OpenAPI JSON at
+Keep `.env` private and back up the encryption key securely. Values encrypted
+with this key cannot be decrypted if it is lost. Keep the same key across
+restarts; the `.env` file is ignored by Git.
+
+Flyway applies database migrations at startup. Hibernate validates the schema
+but does not create or modify it (`ddl-auto: validate`). Health endpoint:
+`http://localhost:8080/actuator/health`. OpenAPI UI:
+`http://localhost:8080/swagger-ui/index.html`; JSON:
 `http://localhost:8080/v3/api-docs`.
 
-## Project, service, and environment API
+## API
 
-The initial CRUD endpoints are available at `/api`:
+The API currently supports CRUD for projects, services, and environments,
+assigning services to environments, and configuration entries scoped to an
+assigned project/service/environment combination.
+
+### Configuration endpoints
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `POST` | `/api/projects` | Create a project |
-| `GET` | `/api/projects` | List projects |
-| `GET` | `/api/projects/{projectId}` | Get one project |
-| `PUT` | `/api/projects/{projectId}` | Update a project |
-| `DELETE` | `/api/projects/{projectId}` | Delete a project |
-| `POST` | `/api/projects/{projectId}/services` | Create a service in a project |
-| `GET` | `/api/projects/{projectId}/services` | List a project's services |
-| `GET` | `/api/projects/{projectId}/services/{serviceId}` | Get one service |
-| `PUT` | `/api/projects/{projectId}/services/{serviceId}` | Update a service |
-| `DELETE` | `/api/projects/{projectId}/services/{serviceId}` | Delete a service |
-| `POST` | `/api/projects/{projectId}/environments` | Create an environment |
-| `GET` | `/api/projects/{projectId}/environments` | List a project's environments |
-| `GET` | `/api/projects/{projectId}/environments/{environmentId}` | Get one environment |
-| `PUT` | `/api/projects/{projectId}/environments/{environmentId}` | Update an environment |
-| `DELETE` | `/api/projects/{projectId}/environments/{environmentId}` | Delete an environment |
-| `POST` | `/api/projects/{projectId}/environments/{environmentId}/services` | Assign a service to an environment |
-| `GET` | `/api/projects/{projectId}/environments/{environmentId}/services` | List services assigned to an environment |
-| `DELETE` | `/api/projects/{projectId}/environments/{environmentId}/services/{serviceId}` | Remove a service assignment |
+| `POST` | `/api/projects/{projectId}/environments/{environmentId}/services/{serviceId}/config` | Create an entry |
+| `GET` | `/api/projects/{projectId}/environments/{environmentId}/services/{serviceId}/config` | List entries |
+| `GET` | `/api/projects/{projectId}/environments/{environmentId}/services/{serviceId}/config/{key}` | Get an entry |
+| `PUT` | `/api/projects/{projectId}/environments/{environmentId}/services/{serviceId}/config/{key}` | Add a new version |
+| `GET` | `/api/projects/{projectId}/environments/{environmentId}/services/{serviceId}/config/{key}/versions` | List version metadata |
+| `POST` | `/api/projects/{projectId}/environments/{environmentId}/services/{serviceId}/config/{key}/rollback` | Restore an older version as a new version |
 
-For example, create a project, a service, an environment, and assign the service:
+Example:
 
 ```sh
-curl -i -X POST http://localhost:8080/api/projects \
+curl -i -X POST \
+  http://localhost:8080/api/projects/PROJECT_UUID/environments/ENVIRONMENT_UUID/services/SERVICE_UUID/config \
   -H 'Content-Type: application/json' \
-  -d '{"name":"commerce","description":"Commerce application"}'
-
-curl -i -X POST http://localhost:8080/api/projects/PROJECT_UUID/services \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"payments","description":"Payment processing"}'
-
-curl -i -X POST http://localhost:8080/api/projects/PROJECT_UUID/environments \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"production"}'
-
-curl -i -X POST http://localhost:8080/api/projects/PROJECT_UUID/environments/ENVIRONMENT_UUID/services \
-  -H 'Content-Type: application/json' \
-  -d '{"serviceId":"SERVICE_UUID"}'
+  -d '{"key":"PAYMENT_API_KEY","value":"replace-me","secret":true}'
 ```
 
-Creation responds with `201 Created` and a `Location` header. Invalid input
-returns `400`, missing resources return `404`, and uniqueness conflicts return
-`409`. Deleting a project also removes its dependent environments and config
-data and services through the database's cascading foreign keys. A service can
-only be assigned to an environment in the same project. Config entries and API
-tokens now support service/environment scoping in the database; their API
-workflows are not implemented yet.
+Values—secret and non-secret—are encrypted using AES-256-GCM before storage.
+Secret values are masked as `********` in management API responses. Each update
+adds an immutable version; rollback copies the selected historical value into a
+new version. Audit records track writes and rollbacks without storing values.
 
-These endpoints currently have no authentication or authorization and are
-intended only for local development. Config CRUD, encryption, token
-authentication, and audit logging still need to be implemented before using the
-service to manage secrets.
+## Security status
+
+The current management API has no authentication or authorization. Secret
+values are masked and encrypted at rest, but this does not make the unauthenticated
+API safe to expose. Run it locally only; do not use it for real secrets or expose
+it to a network until authentication and authorization are implemented. Service
+token creation/validation, service-facing config retrieval, and audited secret
+reveal are not implemented yet.
+
+## Tests
+
+```sh
+mvn test
+```
